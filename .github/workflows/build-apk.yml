@@ -9,9 +9,14 @@ jobs:
   build-apk:
     name: Build APK (Flutter)
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -28,6 +33,21 @@ jobs:
       - name: Gerar estrutura Android
         working-directory: flutter_app
         run: flutter create . --platforms android
+
+      - name: Atualizar versão do Kotlin
+        working-directory: flutter_app/android
+        run: |
+          sed -i 's/org.jetbrains.kotlin.android" version "[^"]*"/org.jetbrains.kotlin.android" version "1.9.22"/' settings.gradle || true
+          sed -i "s/id 'org.jetbrains.kotlin.android' version '[^']*'/id 'org.jetbrains.kotlin.android' version '1.9.22'/" settings.gradle || true
+          sed -i 's/ext.kotlin_version = .*/ext.kotlin_version = "1.9.22"/' build.gradle || true
+
+      - name: Commitar estrutura Android gerada
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add flutter_app/android/
+          git diff --cached --quiet || git commit -m "ci: adiciona estrutura Android gerada pelo Flutter"
+          git push
 
       - name: Get dependencies
         working-directory: flutter_app
