@@ -1,0 +1,25 @@
+services:
+  karaoke-backend:
+    build: .
+    container_name: karaoke-backend
+    restart: unless-stopped
+    ports:
+      - "9881:8000"
+    volumes:
+      - /srv/dev-disk-by-uuid-461b8889-6364-4040-bd23-ed65f4e17b3f/musicas-karaoke:/media:ro
+      - karaoke-data:/app/data
+    environment:
+      - TZ=America/Sao_Paulo
+      - MEDIA_PATH=/media
+      - DATA_PATH=/app/data
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=changeme
+      - SECRET_KEY=troque-esta-chave-secreta-por-algo-aleatorio
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  karaoke-data:
