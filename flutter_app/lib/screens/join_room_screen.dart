@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 
@@ -10,13 +11,50 @@ class JoinRoomScreen extends StatefulWidget {
 }
 
 class _JoinRoomScreenState extends State<JoinRoomScreen> {
-  final _codeController = TextEditingController();
-  final _nameController = TextEditingController();
+  String _name = '';
+  String _code = '';
   bool _loading = false;
   String? _error;
 
+  Future<void> _editField({
+    required String label,
+    required String current,
+    required Function(String) onSave,
+    bool allCaps = false,
+  }) async {
+    final controller = TextEditingController(text: current);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(label),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization:
+              allCaps ? TextCapitalization.characters : TextCapitalization.words,
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+          decoration: InputDecoration(
+            hintText: label,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) onSave(result);
+  }
+
   Future<void> _join() async {
-    if (_codeController.text.isEmpty || _nameController.text.isEmpty) {
+    if (_name.isEmpty || _code.isEmpty) {
       setState(() => _error = 'Preencha todos os campos');
       return;
     }
@@ -25,11 +63,11 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
       _error = null;
     });
     try {
-      final room = await ApiService.joinRoom(_codeController.text);
+      final room = await ApiService.joinRoom(_code);
       if (mounted) {
         context.go('/room/${room['id']}', extra: {
           'room': room,
-          'singerName': _nameController.text,
+          'singerName': _name,
         });
       }
     } catch (e) {
@@ -55,25 +93,29 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Seu nome',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                _TVField(
+                  label: 'Seu nome',
+                  value: _name,
+                  hint: 'Toque OK para digitar',
+                  icon: Icons.person,
+                  onTap: () => _editField(
+                    label: 'Seu nome',
+                    current: _name,
+                    onSave: (v) => setState(() => _name = v),
                   ),
-                  textCapitalization: TextCapitalization.words,
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _codeController,
-                  decoration: const InputDecoration(
-                    labelText: 'Código da sala',
-                    hintText: 'Ex: ABC123',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.meeting_room),
+                _TVField(
+                  label: 'Código da sala',
+                  value: _code,
+                  hint: 'Toque OK para digitar',
+                  icon: Icons.meeting_room,
+                  onTap: () => _editField(
+                    label: 'Código da sala',
+                    current: _code,
+                    allCaps: true,
+                    onSave: (v) => setState(() => _code = v.toUpperCase()),
                   ),
-                  textCapitalization: TextCapitalization.characters,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -96,6 +138,44 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TVField extends StatelessWidget {
+  final String label;
+  final String value;
+  final String hint;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TVField({
+    required this.label,
+    required this.value,
+    required this.hint,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
+          prefixIcon: Icon(icon),
+        ),
+        child: Text(
+          value.isEmpty ? hint : value,
+          style: TextStyle(
+            color: value.isEmpty ? Colors.grey : Colors.black87,
+            fontSize: 16,
           ),
         ),
       ),
