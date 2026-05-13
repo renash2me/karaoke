@@ -56,6 +56,33 @@ class _DisplayScreenState extends State<DisplayScreen> {
         });
       }
     } catch (_) {}
+
+    // Autoplay: se tem música waiting e nenhuma singing, inicia automaticamente
+    _checkAutoplay();
+  }
+
+  void _checkAutoplay() {
+    if (!mounted) return;
+    final singing = _queue.where((i) => i['status'] == 'singing').toList();
+    final waiting = _queue.where((i) => i['status'] == 'waiting').toList();
+    
+    if (singing.isEmpty && waiting.isNotEmpty) {
+      final next = waiting.first;
+      final song = _songs.firstWhere(
+        (s) => s['id'] == next['song_id'],
+        orElse: () => {'id': next['song_id'], 'title': '', 'artist': ''},
+      );
+      // Pequeno delay para garantir que a tela está montada
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted && context.mounted) {
+          context.go('/display/${widget.roomId}/play/${next['song_id']}', extra: {
+            'song': song,
+            'singerName': next['singer_name'],
+            'roomId': widget.roomId,
+          });
+        }
+      });
+    }
   }
 
   void _connectWS() {
