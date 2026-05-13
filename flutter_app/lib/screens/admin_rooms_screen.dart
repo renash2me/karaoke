@@ -26,24 +26,34 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
   }
 
   Future<void> _createRoom() async {
-    final nameController = TextEditingController();
-    final confirmed = await showDialog<bool>(
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nova sala'),
         content: TextField(
-          controller: nameController,
-          decoration: const InputDecoration(labelText: 'Nome da sala'),
+          controller: controller,
           autofocus: true,
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+          decoration: const InputDecoration(
+            labelText: 'Nome da sala',
+            border: OutlineInputBorder(),
+          ),
         ),
         actions: [
-          TextButton(onPressed: () => context.pop(false), child: const Text('Cancelar')),
-          ElevatedButton(onPressed: () => context.pop(true), child: const Text('Criar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Criar'),
+          ),
         ],
       ),
     );
-    if (confirmed == true && nameController.text.isNotEmpty) {
-      await ApiService.createRoom(nameController.text);
+    if (name != null && name.isNotEmpty) {
+      await ApiService.createRoom(name);
       _load();
     }
   }
@@ -82,7 +92,8 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                     children: [
                       Icon(Icons.meeting_room, size: 64, color: Colors.grey),
                       SizedBox(height: 16),
-                      Text('Nenhuma sala ativa', style: TextStyle(color: Colors.grey)),
+                      Text('Nenhuma sala ativa',
+                          style: TextStyle(color: Colors.grey)),
                     ],
                   ),
                 )
@@ -94,7 +105,8 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
-                        leading: const Icon(Icons.meeting_room, color: Colors.deepPurple),
+                        leading: const Icon(Icons.meeting_room,
+                            color: Colors.deepPurple),
                         title: Text(room['name'] ?? ''),
                         subtitle: Text('Código: ${room['code']}'),
                         trailing: Row(
@@ -108,7 +120,10 @@ class _AdminRoomsScreenState extends State<AdminRoomsScreen> {
                               icon: const Icon(Icons.arrow_forward_ios),
                               onPressed: () => context.go(
                                 '/room/${room['id']}',
-                                extra: {'room': room, 'singerName': 'Admin'},
+                                extra: {
+                                  'room': room,
+                                  'singerName': 'Admin'
+                                },
                               ),
                             ),
                           ],

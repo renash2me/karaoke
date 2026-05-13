@@ -50,7 +50,7 @@ class HomeScreen extends StatelessWidget {
                     label: 'Criar sala',
                     subtitle: 'Somente admin',
                     color: Colors.deepPurple,
-                    onTap: () => context.go('/admin/rooms'),
+                    onTap: () => context.go('/home/admin'),
                   ),
                 const SizedBox(height: 32),
                 TextButton(
@@ -103,8 +103,12 @@ class _BigButton extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(subtitle, style: const TextStyle(fontSize: 13, color: Colors.white70)),
+                Text(label,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(subtitle,
+                    style:
+                        const TextStyle(fontSize: 13, color: Colors.white70)),
               ],
             ),
           ],

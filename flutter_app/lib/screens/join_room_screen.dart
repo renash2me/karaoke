@@ -93,6 +93,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Campo nome
                 _TVField(
                   label: 'Seu nome',
                   value: _name,
@@ -105,6 +106,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                // Campo código
                 _TVField(
                   label: 'Código da sala',
                   value: _code,
@@ -145,6 +147,7 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
   }
 }
 
+/// Campo estilo TV — focável pelo D-pad, abre dialog ao pressionar OK
 class _TVField extends StatelessWidget {
   final String label;
   final String value;

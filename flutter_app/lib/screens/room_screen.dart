@@ -100,7 +100,7 @@ class _RoomScreenState extends State<RoomScreen>
   }
 
   Future<void> _sing(Map<String, dynamic> song) async {
-    context.go('/room/${widget.roomId}/play/$songId',${widget.roomId}/${song['id']}', extra: {
+    context.go('/room/${widget.roomId}/play/${widget.roomId}/${song['id']}', extra: {
       'song': song,
       'singerName': widget.singerName,
     });

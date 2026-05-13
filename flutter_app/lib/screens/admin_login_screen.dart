@@ -10,19 +10,55 @@ class AdminLoginScreen extends StatefulWidget {
 }
 
 class _AdminLoginScreenState extends State<AdminLoginScreen> {
-  final _userController = TextEditingController(text: 'admin');
-  final _passController = TextEditingController();
+  String _username = 'admin';
+  String _password = '';
   bool _loading = false;
   String? _error;
+
+  Future<void> _editField({
+    required String label,
+    required String current,
+    required Function(String) onSave,
+    bool obscure = false,
+  }) async {
+    final controller = TextEditingController(text: current);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(label),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          obscureText: obscure,
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+          decoration: InputDecoration(
+            hintText: label,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+    if (result != null) onSave(result);
+  }
 
   Future<void> _login() async {
     setState(() {
       _loading = true;
       _error = null;
     });
-    final ok = await ApiService.adminLogin(_userController.text, _passController.text);
+    final ok = await ApiService.adminLogin(_username, _password);
     if (ok && mounted) {
-      context.go('/admin');
+      context.go('/home/admin');
     } else {
       setState(() => _error = 'Credenciais inválidas');
     }
@@ -45,24 +81,48 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.admin_panel_settings, size: 64, color: Colors.deepPurple),
+                const Icon(Icons.admin_panel_settings,
+                    size: 64, color: Colors.deepPurple),
                 const SizedBox(height: 24),
-                TextField(
-                  controller: _userController,
-                  decoration: const InputDecoration(
-                    labelText: 'Usuário',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.person),
+                InkWell(
+                  onTap: () => _editField(
+                    label: 'Usuário',
+                    current: _username,
+                    onSave: (v) => setState(() => _username = v),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Usuário',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    child: Text(_username,
+                        style: const TextStyle(fontSize: 16)),
                   ),
                 ),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _passController,
-                  obscureText: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Senha',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lock),
+                InkWell(
+                  onTap: () => _editField(
+                    label: 'Senha',
+                    current: _password,
+                    obscure: true,
+                    onSave: (v) => setState(() => _password = v),
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Senha',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.lock),
+                    ),
+                    child: Text(
+                      _password.isEmpty ? 'Toque OK para digitar' : '••••••••',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _password.isEmpty ? Colors.grey : Colors.black87,
+                      ),
+                    ),
                   ),
                 ),
                 if (_error != null) ...[
