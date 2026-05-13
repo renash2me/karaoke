@@ -5,7 +5,6 @@ import 'screens/setup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/join_room_screen.dart';
 import 'screens/display_screen.dart';
-import 'screens/player_screen.dart';
 import 'screens/admin_login_screen.dart';
 
 void main() async {
@@ -35,20 +34,6 @@ final _router = GoRouter(
           room: extra['room'],
         );
       },
-      routes: [
-        GoRoute(
-          path: 'play/:songId',
-          builder: (context, state) {
-            final extra = state.extra as Map<String, dynamic>;
-            return PlayerScreen(
-              roomId: state.pathParameters['roomId']!,
-              songId: state.pathParameters['songId']!,
-              song: extra['song'],
-              singerName: extra['singerName'],
-            );
-          },
-        ),
-      ],
     ),
   ],
 );
