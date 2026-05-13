@@ -127,6 +127,13 @@ class ApiService {
     );
   }
 
+  static Future<void> markQueueItemDone(String roomId) async {
+    await http.post(
+      Uri.parse('$_baseUrl/api/rooms/$roomId/queue/done'),
+      headers: _headers,
+    );
+  }
+
   static Future<List<Map<String, dynamic>>> getScoreboard(String roomId) async {
     final response = await http.get(
       Uri.parse('$_baseUrl/api/rooms/$roomId/scoreboard'),
@@ -136,10 +143,3 @@ class ApiService {
     return [];
   }
 }
-
-  static Future<void> markQueueItemDone(String roomId) async {
-    await http.post(
-      Uri.parse('$_baseUrl/api/rooms/$roomId/queue/done'),
-      headers: _headers,
-    );
-  }
