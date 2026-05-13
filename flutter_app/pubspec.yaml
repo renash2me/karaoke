@@ -15,7 +15,7 @@ dependencies:
   # Áudio
   just_audio: ^0.9.40
   # Microfone e pitch detection
-  record: ^5.1.1
+  record: ^4.4.4
   # Armazenamento local
   shared_preferences: ^2.3.0
   # UI
