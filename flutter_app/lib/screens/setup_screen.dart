@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../services/api_service.dart';
 
@@ -10,9 +11,16 @@ class SetupScreen extends StatefulWidget {
 }
 
 class _SetupScreenState extends State<SetupScreen> {
-  String _url = ApiService.serverUrl.isNotEmpty ? ApiService.serverUrl : 'http://';
+  String _url = '';
   bool _testing = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    // Carrega a URL salva
+    _url = ApiService.serverUrl.isNotEmpty ? ApiService.serverUrl : 'http://';
+  }
 
   Future<void> _editUrl() async {
     final controller = TextEditingController(text: _url);
@@ -64,59 +72,63 @@ class _SetupScreenState extends State<SetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.mic, size: 72, color: Colors.deepPurple),
-                const SizedBox(height: 16),
-                Text('Karaoké',
-                    style: Theme.of(context).textTheme.headlineLarge),
-                const SizedBox(height: 8),
-                const Text('Conecte ao seu servidor',
-                    style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 40),
-                InkWell(
-                  onTap: _editUrl,
-                  borderRadius: BorderRadius.circular(8),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'URL do servidor',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.dns),
-                    ),
-                    child: Text(
-                      _url,
-                      style: const TextStyle(fontSize: 16),
+    // PopScope impede que o botão voltar saia do app nesta tela
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        body: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 480),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.mic, size: 72, color: Colors.deepPurple),
+                  const SizedBox(height: 16),
+                  Text('Karaoké',
+                      style: Theme.of(context).textTheme.headlineLarge),
+                  const SizedBox(height: 8),
+                  const Text('Conecte ao seu servidor',
+                      style: TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 40),
+                  InkWell(
+                    onTap: _editUrl,
+                    borderRadius: BorderRadius.circular(8),
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'URL do servidor',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.dns),
+                      ),
+                      child: Text(
+                        _url,
+                        style: const TextStyle(fontSize: 16),
+                      ),
                     ),
                   ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                  if (_error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _testing ? null : _connect,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: _testing
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text('Conectar',
+                              style: TextStyle(fontSize: 16)),
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _testing ? null : _connect,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: _testing
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Conectar',
-                            style: TextStyle(fontSize: 16)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
