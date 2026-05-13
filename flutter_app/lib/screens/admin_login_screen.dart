@@ -58,7 +58,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
     });
     final ok = await ApiService.adminLogin(_username, _password);
     if (ok && mounted) {
-      context.go('/home/admin');
+      context.go('/home');
     } else {
       setState(() => _error = 'Credenciais inválidas');
     }

@@ -115,9 +115,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              context.go('/room/${widget.roomId}', extra: {
+              context.go('/display/${widget.roomId}', extra: {
                 'room': {'id': widget.roomId, 'name': '', 'code': ''},
-                'singerName': widget.singerName,
               });
             },
             child: const Text('Voltar para a sala'),
@@ -147,7 +146,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         await _player.stop();
-        if (context.mounted) context.pop();
+        if (context.mounted) context.go('/display/${widget.roomId}', extra: {
+          'room': {'id': widget.roomId, 'name': '', 'code': ''},
+        });
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -264,26 +265,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.stop, color: Colors.white),
+                      icon: const Icon(Icons.stop_circle, color: Colors.red),
                       onPressed: _onFinished,
-                      iconSize: 36,
-                    ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: Icon(
-                        _playing
-                            ? Icons.pause_circle
-                            : Icons.play_circle,
-                        color: Colors.deepPurple.shade200,
-                      ),
-                      onPressed: _togglePlay,
                       iconSize: 64,
-                    ),
-                    const SizedBox(width: 24),
-                    IconButton(
-                      icon: const Icon(Icons.mic, color: Colors.white),
-                      onPressed: () {},
-                      iconSize: 36,
+                      tooltip: 'Encerrar',
                     ),
                   ],
                 ),
