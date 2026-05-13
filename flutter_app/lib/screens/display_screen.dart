@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
+import '../services/cdg_parser.dart';
 import '../services/pitch_service.dart';
 
 class DisplayScreen extends StatefulWidget {
@@ -29,6 +32,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   // Player
   final _player = AudioPlayer();
+  Uint8List? _cdgData;
   final _scoreCalc = ScoreCalculator();
   bool _playing = false;
   String? _currentSongId;
@@ -114,9 +118,24 @@ class _DisplayScreenState extends State<DisplayScreen> {
       await _player.setUrl(url);
       setState(() => _duration = _player.duration ?? Duration.zero);
       _scoreCalc.reset();
+
+      // Baixa CDG em paralelo
+      _loadCdg(songId);
+
       await _player.play();
     } catch (e) {
       setState(() => _currentSongId = null);
+    }
+  }
+
+  Future<void> _loadCdg(String songId) async {
+    try {
+      final response = await http.get(Uri.parse(ApiService.cdgUrl(songId)));
+      if (response.statusCode == 200 && mounted) {
+        setState(() => _cdgData = response.bodyBytes);
+      }
+    } catch (_) {
+      setState(() => _cdgData = null);
     }
   }
 
@@ -165,6 +184,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     setState(() {
       _showingScore = false;
       _currentSongId = null;
+      _cdgData = null;
       _position = Duration.zero;
       _duration = Duration.zero;
     });
@@ -317,7 +337,28 @@ class _DisplayScreenState extends State<DisplayScreen> {
           Text(_songArtist(_currentSongId!),
               style: const TextStyle(fontSize: 16, color: Colors.white38),
               textAlign: TextAlign.center),
-          const SizedBox(height: 48),
+          const SizedBox(height: 24),
+          // Letra CDG
+          if (_cdgData != null)
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.black,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: CdgPlayer(
+                  cdgData: _cdgData!,
+                  positionStream: _player.positionStream,
+                ),
+              ),
+            )
+          else
+            const Expanded(
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFFa855f7)),
+              ),
+            ),
+          const SizedBox(height: 16),
           // Score em tempo real
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -65,6 +65,7 @@ class ApiService {
 
   static String audioUrl(String songId) => '$_baseUrl/api/songs/$songId/audio';
   static String cdgUrl(String songId) => '$_baseUrl/api/songs/$songId/cdg';
+  static String cdgUrl(String songId) => '$_baseUrl/api/songs/$songId/cdg';
 
   // --- Salas ---
 
