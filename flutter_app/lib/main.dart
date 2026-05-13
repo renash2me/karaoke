@@ -18,9 +18,28 @@ void main() async {
 final _router = GoRouter(
   initialLocation: ApiService.serverUrl.isEmpty ? '/setup' : '/home',
   routes: [
-    GoRoute(path: '/setup', builder: (_, __) => const SetupScreen()),
-    GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
-    GoRoute(path: '/join', builder: (_, __) => const JoinRoomScreen()),
+    GoRoute(
+      path: '/setup',
+      builder: (_, __) => const SetupScreen(),
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (_, __) => const HomeScreen(),
+      routes: [
+        GoRoute(
+          path: 'join',
+          builder: (_, __) => const JoinRoomScreen(),
+        ),
+        GoRoute(
+          path: 'admin/login',
+          builder: (_, __) => const AdminLoginScreen(),
+        ),
+        GoRoute(
+          path: 'admin',
+          builder: (_, __) => const AdminRoomsScreen(),
+        ),
+      ],
+    ),
     GoRoute(
       path: '/room/:roomId',
       builder: (context, state) {
@@ -31,22 +50,21 @@ final _router = GoRouter(
           singerName: extra['singerName'],
         );
       },
+      routes: [
+        GoRoute(
+          path: 'play/:songId',
+          builder: (context, state) {
+            final extra = state.extra as Map<String, dynamic>;
+            return PlayerScreen(
+              roomId: state.pathParameters['roomId']!,
+              songId: state.pathParameters['songId']!,
+              song: extra['song'],
+              singerName: extra['singerName'],
+            );
+          },
+        ),
+      ],
     ),
-    GoRoute(
-      path: '/play/:roomId/:songId',
-      builder: (context, state) {
-        final extra = state.extra as Map<String, dynamic>;
-        return PlayerScreen(
-          roomId: state.pathParameters['roomId']!,
-          songId: state.pathParameters['songId']!,
-          song: extra['song'],
-          singerName: extra['singerName'],
-        );
-      },
-    ),
-    GoRoute(path: '/admin/login', builder: (_, __) => const AdminLoginScreen()),
-    GoRoute(path: '/admin', builder: (_, __) => const AdminRoomsScreen()),
-    GoRoute(path: '/admin/rooms', builder: (_, __) => const AdminRoomsScreen()),
   ],
 );
 
