@@ -24,7 +24,6 @@ class _RoomScreenState extends State<RoomScreen>
   List<Map<String, dynamic>> _songs = [];
   List<Map<String, dynamic>> _queue = [];
   List<Map<String, dynamic>> _scoreboard = [];
-  final _searchController = TextEditingController();
   bool _loading = true;
 
   @override
@@ -37,7 +36,6 @@ class _RoomScreenState extends State<RoomScreen>
   @override
   void dispose() {
     _tabController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -57,9 +55,38 @@ class _RoomScreenState extends State<RoomScreen>
     }
   }
 
-  Future<void> _search(String q) async {
-    final songs = await ApiService.getSongs(query: q.isEmpty ? null : q);
-    setState(() => _songs = songs);
+  Future<void> _search() async {
+    final controller = TextEditingController();
+    final query = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Buscar músicas'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          onSubmitted: (v) => Navigator.of(context).pop(v),
+          decoration: const InputDecoration(
+            hintText: 'Nome da música ou artista...',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.search),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text),
+            child: const Text('Buscar'),
+          ),
+        ],
+      ),
+    );
+    if (query != null) {
+      final songs = await ApiService.getSongs(query: query.isEmpty ? null : query);
+      setState(() => _songs = songs);
+    }
   }
 
   Future<void> _addToQueue(Map<String, dynamic> song) async {
@@ -88,7 +115,7 @@ class _RoomScreenState extends State<RoomScreen>
         foregroundColor: Colors.white,
         actions: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Chip(
               label: Text(
                 widget.room['code'] ?? '',
@@ -118,12 +145,11 @@ class _RoomScreenState extends State<RoomScreen>
               children: [
                 _SongsTab(
                   songs: _songs,
-                  searchController: _searchController,
                   onSearch: _search,
                   onAddToQueue: _addToQueue,
                   onSing: _sing,
                 ),
-                _QueueTab(queue: _queue, singerName: widget.singerName),
+                _QueueTab(queue: _queue),
                 _ScoreboardTab(scores: _scoreboard),
               ],
             ),
@@ -133,14 +159,12 @@ class _RoomScreenState extends State<RoomScreen>
 
 class _SongsTab extends StatelessWidget {
   final List<Map<String, dynamic>> songs;
-  final TextEditingController searchController;
-  final Function(String) onSearch;
+  final VoidCallback onSearch;
   final Function(Map<String, dynamic>) onAddToQueue;
   final Function(Map<String, dynamic>) onSing;
 
   const _SongsTab({
     required this.songs,
-    required this.searchController,
     required this.onSearch,
     required this.onAddToQueue,
     required this.onSing,
@@ -152,14 +176,17 @@ class _SongsTab extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.all(12),
-          child: TextField(
-            controller: searchController,
-            onChanged: onSearch,
-            decoration: const InputDecoration(
-              hintText: 'Buscar músicas...',
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
+          child: SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onSearch,
+              icon: const Icon(Icons.search),
+              label: const Text('Buscar música'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: Colors.deepPurple),
+                foregroundColor: Colors.deepPurple,
+              ),
             ),
           ),
         ),
@@ -199,9 +226,8 @@ class _SongsTab extends StatelessWidget {
 
 class _QueueTab extends StatelessWidget {
   final List<Map<String, dynamic>> queue;
-  final String singerName;
 
-  const _QueueTab({required this.queue, required this.singerName});
+  const _QueueTab({required this.queue});
 
   @override
   Widget build(BuildContext context) {
