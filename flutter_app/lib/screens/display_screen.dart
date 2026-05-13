@@ -96,7 +96,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   void _checkAutoplay() {
-    if (_showingScore || _currentSongId != null) return;
+    if (_showingScore || _currentSongId != null || !mounted) return;
     final waiting = _queue.where((i) => i['status'] == 'waiting').toList();
     if (waiting.isEmpty) return;
     final next = waiting.first;
@@ -121,6 +121,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   Future<void> _onSongFinished() async {
     if (_showingScore) return;
+    _scoreTimer?.cancel();
     await _player.stop();
 
     // Submete score
@@ -135,8 +136,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _scoreCalc.score,
         _scoreCalc.accuracy,
       );
+      // Marca como done no backend
+      await ApiService.markQueueItemDone(widget.roomId);
     }
 
+    if (!mounted) return;
     setState(() {
       _showingScore = true;
       _scoreCountdown = 10;
@@ -144,6 +148,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     _scoreTimer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) { t.cancel(); return; }
+      if (!_showingScore) { t.cancel(); return; }
       setState(() => _scoreCountdown--);
       if (_scoreCountdown <= 0) {
         t.cancel();
@@ -153,9 +158,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Future<void> _advanceQueue() async {
+    if (!mounted) return;
     setState(() {
       _showingScore = false;
       _currentSongId = null;
+      _position = Duration.zero;
+      _duration = Duration.zero;
     });
     await _load();
   }

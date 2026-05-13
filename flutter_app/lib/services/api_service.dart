@@ -136,3 +136,10 @@ class ApiService {
     return [];
   }
 }
+
+  static Future<void> markQueueItemDone(String roomId) async {
+    await http.post(
+      Uri.parse('$_baseUrl/api/rooms/$roomId/queue/done'),
+      headers: _headers,
+    );
+  }

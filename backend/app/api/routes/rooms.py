@@ -100,3 +100,14 @@ async def submit_score(room_id: str, update: ScoreUpdate):
 @router.get("/{room_id}/scoreboard", response_model=List[ScoreEntry])
 async def get_scoreboard(room_id: str):
     return room_service.get_scoreboard(room_id)
+
+
+@router.post("/{room_id}/queue/done")
+async def mark_done(room_id: str):
+    """Remove o primeiro item waiting da fila (marca como done)"""
+    queue = room_service.get_queue(room_id)
+    for item in queue:
+        if item.status == "waiting":
+            item.status = "done"
+            break
+    return {"ok": True}
