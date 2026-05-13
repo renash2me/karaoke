@@ -18,18 +18,27 @@ class RoomScreen extends StatefulWidget {
   State<RoomScreen> createState() => _RoomScreenState();
 }
 
-class _RoomScreenState extends State<RoomScreen> {
+class _RoomScreenState extends State<RoomScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   List<Map<String, dynamic>> _songs = [];
   List<Map<String, dynamic>> _queue = [];
   List<Map<String, dynamic>> _scoreboard = [];
   final _searchController = TextEditingController();
   bool _loading = true;
-  int _tab = 0;
 
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 3, vsync: this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -55,9 +64,11 @@ class _RoomScreenState extends State<RoomScreen> {
 
   Future<void> _addToQueue(Map<String, dynamic> song) async {
     await ApiService.addToQueue(widget.roomId, song['id'], widget.singerName);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('"${song['title']}" adicionada à fila!')),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${song['title']}" adicionada à fila!')),
+      );
+    }
     _load();
   }
 
@@ -76,21 +87,23 @@ class _RoomScreenState extends State<RoomScreen> {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
-          Chip(
-            label: Text(
-              widget.room['code'] ?? '',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Chip(
+              label: Text(
+                widget.room['code'] ?? '',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: Colors.white,
             ),
-            backgroundColor: Colors.white,
           ),
-          const SizedBox(width: 8),
           IconButton(onPressed: _load, icon: const Icon(Icons.refresh)),
         ],
         bottom: TabBar(
+          controller: _tabController,
           indicatorColor: Colors.white,
           labelColor: Colors.white,
           unselectedLabelColor: Colors.white60,
-          onTap: (i) => setState(() => _tab = i),
           tabs: const [
             Tab(icon: Icon(Icons.music_note), text: 'Músicas'),
             Tab(icon: Icon(Icons.queue_music), text: 'Fila'),
@@ -100,8 +113,8 @@ class _RoomScreenState extends State<RoomScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : IndexedStack(
-              index: _tab,
+          : TabBarView(
+              controller: _tabController,
               children: [
                 _SongsTab(
                   songs: _songs,
@@ -168,7 +181,8 @@ class _SongsTab extends StatelessWidget {
                       onPressed: () => onAddToQueue(song),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.play_circle, color: Colors.deepPurple),
+                      icon: const Icon(Icons.play_circle,
+                          color: Colors.deepPurple),
                       tooltip: 'Cantar agora',
                       onPressed: () => onSing(song),
                     ),
@@ -198,7 +212,8 @@ class _QueueTab extends StatelessWidget {
           children: [
             Icon(Icons.queue_music, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Fila vazia — adicione músicas!', style: TextStyle(color: Colors.grey)),
+            Text('Fila vazia — adicione músicas!',
+                style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -210,13 +225,15 @@ class _QueueTab extends StatelessWidget {
         final status = item['status'] ?? 'waiting';
         return ListTile(
           leading: CircleAvatar(
-            backgroundColor: status == 'singing' ? Colors.green : Colors.deepPurple.shade100,
+            backgroundColor:
+                status == 'singing' ? Colors.green : Colors.deepPurple.shade100,
             child: Text('${i + 1}'),
           ),
           title: Text(item['singer_name'] ?? ''),
           subtitle: Text(item['song_id'] ?? ''),
           trailing: status == 'singing'
-              ? const Chip(label: Text('Cantando 🎤'), backgroundColor: Colors.green)
+              ? const Chip(
+                  label: Text('Cantando 🎤'), backgroundColor: Colors.green)
               : null,
         );
       },
@@ -238,7 +255,8 @@ class _ScoreboardTab extends StatelessWidget {
           children: [
             Icon(Icons.leaderboard, size: 64, color: Colors.grey),
             SizedBox(height: 16),
-            Text('Nenhum score ainda — cante para aparecer aqui!', style: TextStyle(color: Colors.grey)),
+            Text('Nenhum score ainda — cante para aparecer aqui!',
+                style: TextStyle(color: Colors.grey)),
           ],
         ),
       );
@@ -247,7 +265,13 @@ class _ScoreboardTab extends StatelessWidget {
       itemCount: scores.length,
       itemBuilder: (context, i) {
         final s = scores[i];
-        final medal = i == 0 ? '🥇' : i == 1 ? '🥈' : i == 2 ? '🥉' : '${i + 1}.';
+        final medal = i == 0
+            ? '🥇'
+            : i == 1
+                ? '🥈'
+                : i == 2
+                    ? '🥉'
+                    : '${i + 1}.';
         return ListTile(
           leading: Text(medal, style: const TextStyle(fontSize: 24)),
           title: Text(s['singer_name'] ?? ''),
@@ -255,8 +279,11 @@ class _ScoreboardTab extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${s['score']}pts', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              Text('${((s['accuracy'] ?? 0) * 100).toStringAsFixed(0)}% precisão',
+              Text('${s['score']}pts',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                  '${((s['accuracy'] ?? 0) * 100).toStringAsFixed(0)}% precisão',
                   style: const TextStyle(color: Colors.grey, fontSize: 12)),
             ],
           ),
