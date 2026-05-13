@@ -346,7 +346,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   color: Colors.black,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: CdgPlayer(
+                child: CdgPlayerWidget(
                   cdgData: _cdgData!,
                   positionStream: _player.positionStream,
                 ),
