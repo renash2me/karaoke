@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Karaoké</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f1a; color: #fff; min-height: 100vh; }
+
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* LOGIN */
+  #login-screen { align-items: center; justify-content: center; padding: 24px; }
+  .logo { text-align: center; margin-bottom: 32px; }
+  .logo h1 { font-size: 2.5rem; background: linear-gradient(135deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .logo p { color: #888; margin-top: 8px; }
+  .card { background: #1a1a2e; border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; color: #aaa; font-size: 0.85rem; margin-bottom: 6px; }
+  .field input { width: 100%; padding: 12px 16px; background: #0f0f1a; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+  .field input:focus { border-color: #a855f7; }
+  .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s; }
+  .btn:active { opacity: 0.8; }
+  .btn-primary { background: linear-gradient(135deg, #a855f7, #3b82f6); color: #fff; }
+  .btn-secondary { background: #1a1a2e; border: 1px solid #333; color: #aaa; margin-top: 10px; }
+  .error { color: #f87171; font-size: 0.85rem; margin-top: 8px; text-align: center; }
+
+  /* MAIN */
+  #main-screen { }
+  .topbar { background: #1a1a2e; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2a3e; position: sticky; top: 0; z-index: 10; }
+  .topbar h2 { font-size: 1.1rem; }
+  .room-code { background: #a855f7; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; }
+  .tabs { display: flex; background: #1a1a2e; border-bottom: 1px solid #2a2a3e; }
+  .tab { flex: 1; padding: 14px; text-align: center; color: #888; font-size: 0.9rem; cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab.active { color: #a855f7; border-color: #a855f7; }
+
+  /* CATALOG */
+  .search-bar { padding: 12px 16px; position: sticky; top: 57px; background: #0f0f1a; z-index: 5; }
+  .search-bar input { width: 100%; padding: 10px 16px; background: #1a1a2e; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 0.95rem; outline: none; }
+  .song-list { padding: 8px 0; }
+  .song-item { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #1a1a2e; gap: 12px; }
+  .song-item:active { background: #1a1a2e; }
+  .song-info { flex: 1; overflow: hidden; }
+  .song-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .song-artist { color: #888; font-size: 0.85rem; margin-top: 2px; }
+  .add-btn { background: #a855f7; border: none; color: #fff; width: 36px; height: 36px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  .add-btn:active { opacity: 0.7; }
+
+  /* QUEUE */
+  .queue-list { padding: 8px 0; }
+  .queue-item { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1a1a2e; gap: 12px; }
+  .queue-num { width: 28px; height: 28px; border-radius: 50%; background: #2a2a3e; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #aaa; flex-shrink: 0; }
+  .queue-num.singing { background: #a855f7; color: #fff; }
+  .queue-info { flex: 1; }
+  .queue-singer { font-weight: 600; }
+  .queue-song { color: #888; font-size: 0.85rem; margin-top: 2px; }
+  .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
+  .badge-singing { background: #a855f7; color: #fff; }
+  .empty { text-align: center; padding: 60px 20px; color: #555; }
+  .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+
+  /* SCOREBOARD */
+  .score-list { padding: 8px 0; }
+  .score-item { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #1a1a2e; gap: 12px; }
+  .score-medal { font-size: 1.5rem; width: 36px; text-align: center; flex-shrink: 0; }
+  .score-info { flex: 1; }
+  .score-name { font-weight: 600; }
+  .score-detail { color: #888; font-size: 0.85rem; margin-top: 2px; }
+  .score-pts { font-size: 1.2rem; font-weight: 700; color: #a855f7; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #a855f7; color: #fff; padding: 10px 24px; border-radius: 24px; font-size: 0.9rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 100; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  .loading { text-align: center; padding: 40px; color: #555; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen" class="screen active">
+  <div class="logo">
+    <h1>🎤 Karaoké</h1>
+    <p>Entre na sala para começar</p>
+  </div>
+  <div class="card">
+    <div class="field">
+      <label>Seu nome</label>
+      <input id="input-name" type="text" placeholder="Como quer ser chamado?" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Código da sala</label>
+      <input id="input-code" type="text" placeholder="Ex: ABC123" autocomplete="off" style="text-transform:uppercase">
+    </div>
+    <div id="login-error" class="error" style="display:none"></div>
+    <button class="btn btn-primary" onclick="joinRoom()" style="margin-top:8px">Entrar na sala</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main-screen" class="screen">
+  <div class="topbar">
+    <h2 id="room-name">Sala</h2>
+    <span class="room-code" id="room-code-badge"></span>
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('catalog')">🎵 Músicas</div>
+    <div class="tab" onclick="switchTab('queue')">📋 Fila</div>
+    <div class="tab" onclick="switchTab('score')">🏆 Placar</div>
+  </div>
+
+  <!-- CATALOG -->
+  <div id="tab-catalog">
+    <div class="search-bar">
+      <input id="search-input" type="search" placeholder="Buscar músicas ou artistas..." oninput="searchSongs(this.value)">
+    </div>
+    <div id="song-list" class="song-list"></div>
+  </div>
+
+  <!-- QUEUE -->
+  <div id="tab-queue" style="display:none">
+    <div id="queue-list" class="queue-list"></div>
+  </div>
+
+  <!-- SCORE -->
+  <div id="tab-score" style="display:none">
+    <div id="score-list" class="score-list"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = window.location.origin;
+let state = { name: '', roomId: '', roomName: '', roomCode: '', songs: [], ws: null };
+
+// --- LOGIN ---
+async function joinRoom() {
+  const name = document.getElementById('input-name').value.trim();
+  const code = document.getElementById('input-code').value.trim().toUpperCase();
+  const err = document.getElementById('login-error');
+
+  if (!name || !code) { showError('Preencha todos os campos'); return; }
+
+  try {
+    const res = await fetch(`${API}/api/rooms/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    if (!res.ok) throw new Error();
+    const room = await res.json();
+
+    state.name = name;
+    state.roomId = room.id;
+    state.roomName = room.name;
+    state.roomCode = room.code;
+
+    document.getElementById('room-name').textContent = room.name;
+    document.getElementById('room-code-badge').textContent = room.code;
+
+    err.style.display = 'none';
+    document.getElementById('login-screen').classList.remove('active');
+    document.getElementById('main-screen').classList.add('active');
+
+    loadSongs();
+    connectWS();
+    setInterval(refreshQueue, 5000);
+    setInterval(refreshScore, 10000);
+  } catch {
+    showError('Sala não encontrada. Verifique o código.');
+  }
+}
+
+function showError(msg) {
+  const err = document.getElementById('login-error');
+  err.textContent = msg;
+  err.style.display = 'block';
+}
+
+// --- TABS ---
+function switchTab(tab) {
+  ['catalog', 'queue', 'score'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ['catalog','queue','score'][i] === tab);
+  });
+  if (tab === 'queue') refreshQueue();
+  if (tab === 'score') refreshScore();
+}
+
+// --- SONGS ---
+async function loadSongs() {
+  const res = await fetch(`${API}/api/songs/`);
+  state.songs = await res.json();
+  renderSongs(state.songs);
+}
+
+function searchSongs(q) {
+  const filtered = q
+    ? state.songs.filter(s =>
+        s.title.toLowerCase().includes(q.toLowerCase()) ||
+        s.artist.toLowerCase().includes(q.toLowerCase()))
+    : state.songs;
+  renderSongs(filtered);
+}
+
+function renderSongs(songs) {
+  const list = document.getElementById('song-list');
+  if (!songs.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🎵</div><p>Nenhuma música encontrada</p></div>';
+    return;
+  }
+  list.innerHTML = songs.map(s => `
+    <div class="song-item">
+      <div class="song-info">
+        <div class="song-title">${s.title}</div>
+        <div class="song-artist">${s.artist}</div>
+      </div>
+      <button class="add-btn" onclick="addToQueue('${s.id}','${esc(s.title)}')">+</button>
+    </div>
+  `).join('');
+}
+
+async function addToQueue(songId, songTitle) {
+  try {
+    await fetch(`${API}/api/rooms/${state.roomId}/queue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ song_id: songId, singer_name: state.name })
+    });
+    showToast(`"${songTitle}" adicionada! 🎤`);
+    refreshQueue();
+  } catch {
+    showToast('Erro ao adicionar música');
+  }
+}
+
+// --- QUEUE ---
+async function refreshQueue() {
+  const res = await fetch(`${API}/api/rooms/${state.roomId}/queue`);
+  const queue = await res.json();
+  const list = document.getElementById('queue-list');
+
+  if (!queue.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><p>Fila vazia — adicione músicas!</p></div>';
+    return;
+  }
+
+  // Busca títulos das músicas
+  const songMap = {};
+  state.songs.forEach(s => songMap[s.id] = s.title);
+
+  list.innerHTML = queue.map((item, i) => `
+    <div class="queue-item">
+      <div class="queue-num ${item.status === 'singing' ? 'singing' : ''}">${i + 1}</div>
+      <div class="queue-info">
+        <div class="queue-singer">${item.singer_name}</div>
+        <div class="queue-song">${songMap[item.song_id] || item.song_id}</div>
+      </div>
+      ${item.status === 'singing' ? '<span class="badge badge-singing">🎤 Cantando</span>' : ''}
+    </div>
+  `).join('');
+}
+
+// --- SCORE ---
+async function refreshScore() {
+  const res = await fetch(`${API}/api/rooms/${state.roomId}/scoreboard`);
+  const scores = await res.json();
+  const list = document.getElementById('score-list');
+
+  if (!scores.length) {
+    list.innerHTML = '<div class="empty"><div class="empty-icon">🏆</div><p>Nenhum score ainda</p></div>';
+    return;
+  }
+
+  const medals = ['🥇','🥈','🥉'];
+  list.innerHTML = scores.slice(0, 10).map((s, i) => `
+    <div class="score-item">
+      <div class="score-medal">${medals[i] || (i+1)}</div>
+      <div class="score-info">
+        <div class="score-name">${s.singer_name}</div>
+        <div class="score-detail">${(s.accuracy * 100).toFixed(0)}% precisão</div>
+      </div>
+      <div class="score-pts">${s.score}pts</div>
+    </div>
+  `).join('');
+}
+
+// --- WEBSOCKET ---
+function connectWS() {
+  const wsUrl = `${API.replace('http', 'ws')}/ws/${state.roomId}`;
+  state.ws = new WebSocket(wsUrl);
+  state.ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'queue_update') refreshQueue();
+    if (msg.type === 'score_update') refreshScore();
+  };
+  state.ws.onclose = () => setTimeout(connectWS, 3000);
+}
+
+// --- UTILS ---
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function esc(str) {
+  return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// Enter nos campos de login
+document.getElementById('input-name').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('input-code').focus(); });
+document.getElementById('input-code').addEventListener('keydown', e => { if (e.key === 'Enter') joinRoom(); });
+</script>
+</body>
+</html>
