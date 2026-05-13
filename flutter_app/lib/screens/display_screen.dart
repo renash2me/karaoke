@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:wakelock_plus/wakelock_plus.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -50,7 +49,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
   @override
   void initState() {
     super.initState();
-    WakelockPlus.enable();
     _initPlayer();
     _load();
     _connectWS();
@@ -66,7 +64,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _stateSub?.cancel();
     _scoreTimer?.cancel();
     _refreshTimer?.cancel();
-    WakelockPlus.disable();
     _ws?.sink.close();
     super.dispose();
   }
