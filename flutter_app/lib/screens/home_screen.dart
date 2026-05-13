@@ -15,13 +15,13 @@ class HomeScreen extends StatelessWidget {
         actions: [
           if (ApiService.isAdmin)
             TextButton.icon(
-              onPressed: () => context.go('/admin'),
+              onPressed: () => context.go('/home/admin'),
               icon: const Icon(Icons.admin_panel_settings, color: Colors.white),
               label: const Text('Admin', style: TextStyle(color: Colors.white)),
             )
           else
             TextButton.icon(
-              onPressed: () => context.go('/admin/login'),
+              onPressed: () => context.go('/home/admin/login'),
               icon: const Icon(Icons.lock_outline, color: Colors.white),
               label: const Text('Admin', style: TextStyle(color: Colors.white)),
             ),
@@ -41,7 +41,7 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.group_add,
                   label: 'Entrar numa sala',
                   subtitle: 'Digite o código da sala',
-                  onTap: () => context.go('/join'),
+                  onTap: () => context.go('/home/join'),
                 ),
                 const SizedBox(height: 16),
                 if (ApiService.isAdmin)
