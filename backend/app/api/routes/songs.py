@@ -4,6 +4,7 @@ from typing import List, Optional
 from app.models.schemas import Song
 from app.services.library import scan_library, get_song_path, get_cdg_path
 from app.core.auth import get_current_admin
+from app.services.lyrics import fetch_lyrics, parse_lrc
 
 router = APIRouter(prefix="/api/songs", tags=["songs"])
 
@@ -48,3 +49,19 @@ async def stream_cdg(song_id: str):
     if not path:
         raise HTTPException(status_code=404, detail="CDG não encontrado")
     return FileResponse(path, media_type="application/octet-stream")
+
+
+@router.get("/{song_id}/lyrics")
+async def get_lyrics(song_id: str):
+    songs = get_library()
+    song = next((s for s in songs if s.id == song_id), None)
+    if not song:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Música não encontrada")
+    
+    lrc = await fetch_lyrics(song.artist, song.title)
+    if not lrc:
+        return {"lines": [], "found": False}
+    
+    lines = parse_lrc(lrc)
+    return {"lines": lines, "found": True}

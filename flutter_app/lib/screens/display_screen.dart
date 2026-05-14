@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -7,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../services/api_service.dart';
-import '../services/cdg_parser.dart';
+import '../widgets/lyrics_display.dart';
 import '../services/pitch_service.dart';
 
 class DisplayScreen extends StatefulWidget {
@@ -32,7 +31,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   // Player
   final _player = AudioPlayer();
-  Uint8List? _cdgData;
+  List<LyricsLine> _lyricsLines = [];
+  bool _lyricsLoaded = false;
   final _scoreCalc = ScoreCalculator();
   bool _playing = false;
   String? _currentSongId;
@@ -120,7 +120,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       _scoreCalc.reset();
 
       // Baixa CDG em paralelo
-      _loadCdg(songId);
+      _loadLyrics(songId);
 
       await _player.play();
     } catch (e) {
@@ -128,14 +128,19 @@ class _DisplayScreenState extends State<DisplayScreen> {
     }
   }
 
-  Future<void> _loadCdg(String songId) async {
+  Future<void> _loadLyrics(String songId) async {
+    setState(() { _lyricsLoaded = false; _lyricsLines = []; });
     try {
-      final response = await http.get(Uri.parse(ApiService.cdgUrl(songId)));
+      final response = await http.get(Uri.parse('${ApiService.serverUrl}/api/songs/$songId/lyrics'));
       if (response.statusCode == 200 && mounted) {
-        setState(() => _cdgData = response.bodyBytes);
+        final data = jsonDecode(response.body);
+        final lines = (data['lines'] as List).map((l) =>
+          LyricsLine(timeMs: l['time_ms'], text: l['text'])
+        ).toList();
+        setState(() { _lyricsLines = lines; _lyricsLoaded = true; });
       }
     } catch (_) {
-      setState(() => _cdgData = null);
+      setState(() => _lyricsLoaded = true);
     }
   }
 
@@ -184,7 +189,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     setState(() {
       _showingScore = false;
       _currentSongId = null;
-      _cdgData = null;
+      _lyricsLines = [];
+      _lyricsLoaded = false;
       _position = Duration.zero;
       _duration = Duration.zero;
     });
@@ -338,26 +344,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
               style: const TextStyle(fontSize: 16, color: Colors.white38),
               textAlign: TextAlign.center),
           const SizedBox(height: 24),
-          // Letra CDG
-          if (_cdgData != null)
-            Expanded(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: CdgPlayerWidget(
-                  cdgData: _cdgData!,
-                  positionStream: _player.positionStream,
-                ),
-              ),
-            )
-          else
-            const Expanded(
-              child: Center(
-                child: CircularProgressIndicator(color: Color(0xFFa855f7)),
-              ),
-            ),
+          // Letra sincronizada
+          Expanded(
+            child: !_lyricsLoaded
+                ? const Center(child: CircularProgressIndicator(color: Color(0xFFa855f7)))
+                : LyricsDisplay(
+                    lines: _lyricsLines,
+                    positionStream: _player.positionStream,
+                  ),
+          ),
           const SizedBox(height: 16),
           // Score em tempo real
           Row(
