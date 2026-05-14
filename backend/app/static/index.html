@@ -58,6 +58,8 @@
   .queue-song { color: #888; font-size: 0.85rem; margin-top: 2px; }
   .badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 10px; }
   .badge-singing { background: #a855f7; color: #fff; }
+  .remove-btn { background: none; border: none; color: #555; font-size: 1.1rem; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .remove-btn:active { color: #f87171; background: #2a1a1a; }
   .empty { text-align: center; padding: 60px 20px; color: #555; }
   .empty-icon { font-size: 3rem; margin-bottom: 12px; }
 
@@ -261,7 +263,11 @@ async function refreshQueue() {
         <div class="queue-singer">${item.singer_name}</div>
         <div class="queue-song">${songMap[item.song_id] || item.song_id}</div>
       </div>
-      ${item.status === 'singing' ? '<span class="badge badge-singing">🎤 Cantando</span>' : ''}
+      ${item.status === 'singing' 
+        ? '<span class="badge badge-singing">🎤 Cantando</span>' 
+        : item.singer_name === state.name 
+          ? `<button class="remove-btn" onclick="removeFromQueue('${item.id}')">✕</button>`
+          : ''}
     </div>
   `).join('');
 }
@@ -288,6 +294,19 @@ async function refreshScore() {
       <div class="score-pts">${s.score}pts</div>
     </div>
   `).join('');
+}
+
+// --- REMOVER DA FILA ---
+async function removeFromQueue(itemId) {
+  try {
+    await fetch(`${API}/api/rooms/${state.roomId}/queue/${itemId}?singer_name=${encodeURIComponent(state.name)}`, {
+      method: 'DELETE'
+    });
+    showToast('Música removida da fila');
+    refreshQueue();
+  } catch {
+    showToast('Erro ao remover');
+  }
 }
 
 // --- WEBSOCKET ---

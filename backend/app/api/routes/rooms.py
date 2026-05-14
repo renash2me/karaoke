@@ -102,6 +102,18 @@ async def get_scoreboard(room_id: str):
     return room_service.get_scoreboard(room_id)
 
 
+@router.delete("/{room_id}/queue/{item_id}")
+async def remove_from_queue(room_id: str, item_id: str, singer_name: str):
+    """Remove um item da fila — só permite remover itens do próprio cantor"""
+    queue = room_service.get_queue(room_id)
+    for item in queue:
+        if item.id == item_id and item.singer_name == singer_name and item.status == "waiting":
+            item.status = "done"
+            return {"ok": True}
+    from fastapi import HTTPException
+    raise HTTPException(status_code=403, detail="Item não encontrado ou não pertence a você")
+
+
 @router.post("/{room_id}/queue/done")
 async def mark_done(room_id: str):
     """Remove o primeiro item waiting da fila (marca como done)"""
